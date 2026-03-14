@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: medshield_db
+      MYSQL_ROOT_PASSWORD: Admin@123 # Must match application.properties
+    ports:
+      - "3306:3306"
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db # This triggers the first part of your property
+      - SPRING_DATASOURCE_PASSWORD=Admin@123

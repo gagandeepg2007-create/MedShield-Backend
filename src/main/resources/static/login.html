@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedShield | Staff Login</title>
+    <style>
+        /* Core Reset & Alignment */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #dbeafe 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* The Login Card */
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 86, 179, 0.1);
+            width: 360px;
+            text-align: center;
+            border-top: 6px solid #0056b3;
+        }
+
+        /* Medicine Symbol Styling */
+        .symbol-wrapper {
+            font-size: 50px;
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin: 0 0 5px 0;
+            font-size: 1.6rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Input Alignment & Styling */
+        .input-group {
+            text-align: left;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 5px;
+            margin-left: 2px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 0;
+            border: 1px solid #d1d9e0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background-color: #f8fafc;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #0056b3;
+            background-color: #fff;
+        }
+
+        /* Button Styling */
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #004494;
+        }
+
+        /* Error Message Alignment */
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+            background: #fdf2f2;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .footer-text {
+            margin-top: 2rem;
+            font-size: 11px;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="symbol-wrapper">⚕</div>
+    <h2>MedShield</h2>
+    <p class="subtitle">Secure Staff Portal</p>
+
+    <div class="input-group">
+        <label>Staff ID</label>
+        <input type="text" id="username" placeholder="Username" autocomplete="off">
+    </div>
+
+    <div class="input-group">
+        <label>Access Password</label>
+        <input type="password" id="password" placeholder="Password" autocomplete="new-password">
+    </div>
+
+    <button onclick="handleLogin()">Sign In</button>
+    <p id="errorMessage" class="error">Invalid Credentials!</p>
+
+    <div class="footer-text">
+        Authorized Access Only
+    </div>
+</div>
+
+<script>
+    function handleLogin() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+
+        // Original code logic strictly preserved
+        if(user === "admin" && pass === "medshield123") {
+            sessionStorage.setItem("isLoggedIn", "true");
+            window.location.href = "dashboard.html";
+        } else {
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+    }
+</script>
+
+</body>
+</html>

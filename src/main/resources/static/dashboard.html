@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedShield | Doctor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // If the flag isn't in sessionStorage, kick them back to login
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "login.html";
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container-custom { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #3498db !important; color: white !important; text-transform: uppercase; letter-spacing: 1px; padding: 15px !important; }
+        td { padding: 15px !important; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f9f9f9; }
+
+        .badge-custom { padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; color: white; display: inline-block; min-width: 90px; text-align: center; }
+
+        .btn-view {
+            background-color: #f8f9fa; color: #007bff; border: 1px solid #007bff; padding: 6px 14px;
+            border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s ease; display: inline-block;
+        }
+        .btn-view:hover { background-color: #007bff; color: white; box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3); transform: translateY(-1px); }
+
+        .modal-content { border-radius: 12px; border: none; box-shadow: 0 5px 30px rgba(0,0,0,0.3); }
+        .step-indicator { font-size: 0.8rem; font-weight: bold; color: #7f8c8d; text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .ai-card { background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%); border: 1px solid #d1e3f8 !important; }
+
+        /* Module Button Styles */
+        .btn-module { transition: all 0.3s ease; border-width: 2px; }
+        .btn-module:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+<div class="container-custom">
+    <h2>🏥 MedShield Doctor Dashboard</h2>
+
+    <div class="row g-3 my-4">
+        <div class="col-12 col-md-3">
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; border-left: 5px solid #27ae60; height: 100%;">
+                <h4 style="margin: 0; color: #2e7d32; font-size: 1.1rem;">Stable Patients</h4>
+                <h2 id="count-low" style="margin: 10px 0 0 0; border:none; padding:0;">0</h2>
+                <p style="font-size: 0.8rem; color: #666; margin:0;">LOW RISK</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div style="background: #fffde7; padding: 20px; border-radius: 10px; border-left: 5px solid #f1c40f; height: 100%;">
+                <h4 style="margin: 0; color: #fbc02d; font-size: 1.1rem;">Observation</h4>
+                <h2 id="count-medium" style="margin: 10px 0 0 0; border:none; padding:0;">0</h2>
+                <p style="font-size: 0.8rem; color: #666; margin:0;">MEDIUM RISK</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div style="background: #fdeded; padding: 20px; border-radius: 10px; border-left: 5px solid #e74c3c; height: 100%;">
+                <h4 style="margin: 0; color: #c62828; font-size: 1.1rem;">Critical Alerts</h4>
+                <h2 id="count-high" style="margin: 10px 0 0 0; border:none; padding:0;">0</h2>
+                <p style="font-size: 0.8rem; color: #666; margin:0;">HIGH RISK</p>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card shadow-sm border-0 ai-card h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <h5 class="text-muted" style="font-size: 0.9rem;">Global Risk Index</h5>
+                    <h3 id="displayRiskCategory" class="fw-bold text-primary">--</h3>
+                    <p class="small text-secondary mb-0" style="font-size: 0.7rem;">Dual-Model AI Analysis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-3 g-3">
+        <div class="col-12 col-lg-6"><h3 style="margin: 0; color: #2c3e50;">Patient Records</h3></div>
+        <div class="col-12 col-lg-6 text-lg-end">
+            <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-lg-end">
+                <button id="toggleDeleteMode" onclick="enableDeleteMode()" class="btn btn-warning fw-bold text-white px-3">🗑️ Remove</button>
+                <button id="confirmDeleteBtn" onclick="deleteSelectedPatients()" class="btn btn-danger fw-bold px-3" style="display: none;">Confirm Delete</button>
+                <button onclick="openModal()" class="btn btn-success fw-bold px-3">+ Register Patient</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4 mb-4 d-flex justify-content-center align-items-center">
+        <div style="width: 250px; height: 250px; position: relative;"><canvas id="riskChart"></canvas></div>
+    </div>
+
+    <div class="mb-4">
+        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="🔍 Search patients by name or Medical ID..." class="form-control p-3 border-2 shadow-sm">
+    </div>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table mb-0" id="patientTable">
+            <thead>
+            <tr>
+                <th class="select-col" style="display: none; width: 50px; text-align: center;">Select</th>
+                <th>PATIENT NAME</th>
+                <th>MEDICAL ID</th>
+                <th>AGE</th>
+                <th>BLOOD GROUP</th>
+                <th>RISK STATUS</th>
+                <th>ACTION</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal shadow" id="patientModal" tabindex="-1" style="display:none; background: rgba(0,0,0,0.5); overflow-y: auto;">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content p-4">
+
+            <div id="reg-page-1">
+                <span class="step-indicator">Step 1 of 2: Basic Profile</span>
+                <h2 class="mb-3" style="color: #2c3e50;">Identity & Vitals</h2>
+                <hr class="mb-4">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6"><label class="form-label fw-bold">Full Name</label><input type="text" id="fullName" class="form-control"></div>
+                    <div class="col-md-3"><label class="form-label fw-bold">Age</label><input type="number" id="age" class="form-control"></div>
+                    <div class="col-md-3"><label class="form-label fw-bold">Blood Group</label><input type="text" id="bloodGroup" class="form-control" placeholder="O+"></div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6"><label class="form-label fw-bold">Email</label><input type="email" id="email" class="form-control"></div>
+                    <div class="col-md-6"><label class="form-label fw-bold">Emergency Contact</label><input type="text" id="emergencyContact" class="form-control"></div>
+                </div>
+                <div class="row g-3 mb-4 bg-light p-3 rounded border">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-primary">Height (cm)</label>
+                        <input type="number" id="height" class="form-control" oninput="calculateBMI()" placeholder="170">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-primary">Weight (kg)</label>
+                        <input type="number" id="weight" class="form-control" oninput="calculateBMI()" placeholder="70">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Auto-BMI</label>
+                        <input type="text" id="bmi" class="form-control fw-bold border-primary text-primary" readonly placeholder="0.0">
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" onclick="showPage(2)" class="btn btn-primary flex-grow-1 fw-bold py-2">Next: AI Diagnostics →</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-light px-4">Cancel</button>
+                </div>
+            </div>
+
+            <div id="reg-page-2" style="display: none;">
+                <span class="step-indicator">Step 2 of 2: Diagnostic Modules</span>
+                <h2 class="mb-3" style="color: #27ae60;">Risk Assessment</h2>
+                <hr class="mb-4">
+
+                <p class="small text-muted mb-2">Select modules to input specialized indicators:</p>
+                <div class="d-flex gap-3 mb-4">
+                    <button type="button" onclick="toggleModule('hyper')" class="btn btn-outline-danger p-3 flex-grow-1 btn-module border-2">
+                        <div style="font-size: 1.5rem;">❤️</div><b>Hypertension</b>
+                    </button>
+                    <button type="button" onclick="toggleModule('diab')" class="btn btn-outline-primary p-3 flex-grow-1 btn-module border-2">
+                        <div style="font-size: 1.5rem;">🩸</div><b>Diabetes</b>
+                    </button>
+                </div>
+
+                <div id="hyper-module" style="display:none;" class="p-4 border rounded mb-3 bg-white shadow-sm border-danger">
+                    <h6 class="text-danger fw-bold border-bottom pb-2">Hypertension Factors</h6>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-4"><label class="small fw-bold">Activity (0-5)</label><input type="number" id="physicalActivity" class="form-control" value="3"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Alcohol Score (0-10)</label><input type="number" id="alcoholScore" class="form-control" value="0"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Smoking (0/1)</label><input type="number" id="smokingStatus" class="form-control" value="0"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Systolic BP</label><input type="number" id="systolicBP" class="form-control" value="120"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Family Hist (0/1)</label><input type="number" id="famHistory" class="form-control" value="0"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Cholesterol (1-5)</label><input type="number" id="cholesterol" class="form-control" value="1"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Stress (0/1)</label><input type="number" id="stressLevel" class="form-control" value="0"></div>
+                    </div>
+                </div>
+
+                <div id="diab-module" style="display:none;" class="p-4 border rounded mb-3 bg-white shadow-sm border-primary">
+                    <h6 class="text-primary fw-bold border-bottom pb-2">Diabetes Factors</h6>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-4"><label class="small fw-bold">Pregnancies</label><input type="number" id="pregnancies" class="form-control" value="0"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Glucose</label><input type="number" id="glucose" class="form-control" value="100"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Blood Pressure</label><input type="number" id="bloodPressure" class="form-control" value="80"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Skin Thickness</label><input type="number" id="skinThickness" class="form-control" value="20"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Insulin</label><input type="number" id="insulin" class="form-control" value="80"></div>
+                        <div class="col-md-4"><label class="small fw-bold">Pedigree Score</label><input type="number" step="0.001" id="dpf" class="form-control" value="0.472"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" onclick="savePatient()" class="btn btn-success flex-grow-1 fw-bold py-3">RUN AI ENGINE & SAVE ✔</button>
+                    <button type="button" onclick="showPage(1)" class="btn btn-secondary px-4">BACK</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let myChart;
+
+    // Load Initial Data
+    fetch('/api/patients')
+        .then(response => response.json())
+        .then(data => { renderTable(data); })
+        .catch(error => console.error('Error:', error));
+
+    function renderTable(patients) {
+        const body = document.getElementById('tableBody');
+        body.innerHTML = "";
+        let lowCount = 0, mediumCount = 0, highCount = 0;
+
+        patients.forEach(p => {
+            const riskText = (p.riskCategory || "LOW RISK").toUpperCase();
+            let badgeColor = "#27ae60";
+
+            if (riskText.includes("HIGH")) { badgeColor = "#e74c3c"; highCount++; }
+            else if (riskText.includes("MEDIUM")) { badgeColor = "#f1c40f"; mediumCount++; }
+            else { lowCount++; }
+
+            body.innerHTML += `
+                <tr>
+                    <td class="select-col" style="display: none; text-align: center;"><input type="checkbox" class="patient-checkbox" value="${p.qrCodeId}"></td>
+                    <td class="fw-bold">${p.fullName}</td>
+                    <td><code>${p.qrCodeId}</code></td>
+                    <td>${p.age}</td>
+                    <td>${p.bloodGroup}</td>
+                    <td><span class="badge-custom" style="background-color: ${badgeColor};">${riskText}</span></td>
+                    <td><a href="profile.html?id=${p.qrCodeId}" class="btn-view">View Profile</a></td>
+                </tr>`;
+        });
+
+        document.getElementById('count-low').innerText = lowCount;
+        document.getElementById('count-medium').innerText = mediumCount;
+        document.getElementById('count-high').innerText = highCount;
+
+        if(patients.length > 0) updateRiskCard(patients[patients.length - 1]);
+        updateAnalyticsChart(lowCount, mediumCount, highCount);
+    }
+
+    function calculateBMI() {
+        const h = document.getElementById('height').value / 100;
+        const w = document.getElementById('weight').value;
+        if (h > 0 && w > 0) {
+            document.getElementById('bmi').value = (w / (h * h)).toFixed(2);
+        }
+    }
+
+    function toggleModule(mod) {
+        const el = document.getElementById(mod + '-module');
+        el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function updateRiskCard(patientData) {
+        const riskDisplay = document.getElementById('displayRiskCategory');
+        riskDisplay.innerText = patientData.riskCategory || "ANALYZING...";
+        riskDisplay.classList.remove("text-danger", "text-warning", "text-success", "text-primary");
+        if(patientData.riskCategory.includes("HIGH")) riskDisplay.classList.add("text-danger");
+        else if(patientData.riskCategory.includes("MEDIUM")) riskDisplay.classList.add("text-warning");
+        else riskDisplay.classList.add("text-success");
+    }
+
+    function updateAnalyticsChart(low, medium, high) {
+        const ctx = document.getElementById('riskChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low', 'Medium', 'High'],
+                datasets: [{
+                    data: [low, medium, high],
+                    backgroundColor: ['#27ae60', '#f1c40f', '#e74c3c'],
+                    cutout: '70%'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function savePatient() {
+        const data = {
+            fullName: document.getElementById('fullName').value,
+            age: parseInt(document.getElementById('age').value || 0),
+            bloodGroup: document.getElementById('bloodGroup').value,
+            email: document.getElementById('email').value,
+            emergencyContact: document.getElementById('emergencyContact').value,
+            height: parseFloat(document.getElementById('height').value || 0),
+            weight: parseFloat(document.getElementById('weight').value || 0),
+            bmi: parseFloat(document.getElementById('bmi').value || 0),
+            // Hypertension fields
+            physicalActivity: parseInt(document.getElementById('physicalActivity').value || 0),
+            alcoholScore: parseInt(document.getElementById('alcoholScore').value || 0),
+            smokingStatus: parseInt(document.getElementById('smokingStatus').value || 0),
+            systolicBP: parseInt(document.getElementById('systolicBP').value || 0),
+            famHistory: parseInt(document.getElementById('famHistory').value || 0),
+            cholesterol: parseInt(document.getElementById('cholesterol').value || 1),
+            stressLevel: parseInt(document.getElementById('stressLevel').value || 0),
+            // Diabetes fields
+            pregnancies: parseInt(document.getElementById('pregnancies').value || 0),
+            glucose: parseInt(document.getElementById('glucose').value || 0),
+            bloodPressure: parseInt(document.getElementById('bloodPressure').value || 0),
+            skinThickness: parseFloat(document.getElementById('skinThickness').value || 0),
+            insulin: parseFloat(document.getElementById('insulin').value || 0),
+            dpf: parseFloat(document.getElementById('dpf').value || 0.0)
+        };
+
+        fetch('/api/patients/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(() => {
+            alert("Analysis Complete. Patient Registered Successfully!");
+            location.reload();
+        }).catch(err => alert("Error saving patient data."));
+    }
+
+    function showPage(p) {
+        document.getElementById('reg-page-1').style.display = p === 1 ? 'block' : 'none';
+        document.getElementById('reg-page-2').style.display = p === 2 ? 'block' : 'none';
+    }
+    function openModal() { showPage(1); document.getElementById('patientModal').style.display = 'block'; }
+    function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
+    function searchTable() {
+        let filter = document.getElementById("searchInput").value.toUpperCase();
+        let tr = document.getElementById("tableBody").getElementsByTagName("tr");
+        for (let i = 0; i < tr.length; i++) {
+            let txtValue = tr[i].textContent || tr[i].innerText;
+            tr[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+    function enableDeleteMode() {
+        const cols = document.querySelectorAll('.select-col');
+        cols.forEach(col => col.style.display = col.style.display === 'none' ? 'table-cell' : 'none');
+        document.getElementById('confirmDeleteBtn').style.display = document.getElementById('confirmDeleteBtn').style.display === 'none' ? 'inline-block' : 'none';
+    }
+    async function deleteSelectedPatients() {
+        const ids = Array.from(document.querySelectorAll('.patient-checkbox:checked')).map(cb => cb.value);
+        if (confirm(`Delete ${ids.length} records?`)) {
+            for (let id of ids) await fetch(`/api/patients/${id}`, { method: 'DELETE' });
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>

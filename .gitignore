@@ -1,0 +1,33 @@
+# --- Maven & Build Artifacts ---
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/
+.wrapper/
+
+# --- Database Files (Crucial for your "Yowza" error) ---
+*.db
+*.mv.db
+*.trace.db
+/data/
+db/
+*.log
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# --- VS Code ---
+.vscode/
+.factorypath
+
+# --- Docker ---
+.docker/
